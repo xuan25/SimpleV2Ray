@@ -4,13 +4,31 @@ namespace SimpleV2Ray
 {
     internal class V2RayConfig
     {
+        public class ApiConfig
+        {
+            public string? Tag { get; set; }
+        }
+
+        public ApiConfig? Api { get; set; }
+
+        public class RoutingConfig
+        {
+            public class RuleConfig
+            {
+                public List<string>? InboundTag { get; set; }
+                public string? OutboundTag { get; set; }
+            }
+
+            public List<RuleConfig>? Rules { get; set; }
+        }
+
+        public RoutingConfig? Routing { get; set; }
+
         public class InboundConfig
         {
             public string? Listen { get; set; }
             public int Port { get; set; }
             public string? Protocol { get; set; }
-            public Dictionary<string, object>? Settings { get; set; }
-            public Dictionary<string, object>? Sniffing { get; set; }
             public string? Tag { get; set; }
         }
 
@@ -20,7 +38,6 @@ namespace SimpleV2Ray
         {
             public string? Protocol { get; set; }
             public string? SendThrough { get; set; }
-            public Dictionary<string, object>? Settings { get; set; }
             public string? Tag { get; set; }
         }
 

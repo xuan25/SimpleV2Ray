@@ -12,9 +12,12 @@ namespace SimpleV2Ray
         public double DownlinkRate { get; private set; }
         public DateTime LastUpdate { get; private set; }
 
-        public OutboundStats(string name)
+        public string ApiServer { get; private set; }
+
+        public OutboundStats(string name, string apiServer)
         {
             Name = name;
+            ApiServer = apiServer;
             LastUpdate = DateTime.Now;
         }
 
@@ -25,13 +28,13 @@ namespace SimpleV2Ray
             double deltaSec = deltaTime.TotalSeconds;
             LastUpdate = now;
 
-            long? updatedUplink = GetStats($"outbound>>>{Name}>>>traffic>>>uplink", v2ctlPath);
+            long? updatedUplink = GetStats($"outbound>>>{Name}>>>traffic>>>uplink", ApiServer, v2ctlPath);
             if (updatedUplink != null)
             {
                 UplinkRate = (updatedUplink.Value - Uplink) / deltaSec;
                 Uplink = updatedUplink.Value;
             }
-            long? updatedDownlink = GetStats($"outbound>>>{Name}>>>traffic>>>downlink", v2ctlPath);
+            long? updatedDownlink = GetStats($"outbound>>>{Name}>>>traffic>>>downlink", ApiServer, v2ctlPath);
             if (updatedDownlink != null)
             {
                 DownlinkRate = (updatedDownlink.Value - Downlink) / deltaSec;
@@ -39,11 +42,11 @@ namespace SimpleV2Ray
             }
         }
 
-        private static long? GetStats(string name, string v2ctlPath)
+        private static long? GetStats(string name, string apiServer, string v2ctlPath)
         {
             Process process = new()
             {
-                StartInfo = new ProcessStartInfo(v2ctlPath, $"api --server=127.0.0.1:15490 StatsService.GetStats \"name: '{name}' reset: false\"")
+                StartInfo = new ProcessStartInfo(v2ctlPath, $"api --server={apiServer} StatsService.GetStats \"name: '{name}' reset: false\"")
                 {
                     CreateNoWindow = true,
                     RedirectStandardInput = true,

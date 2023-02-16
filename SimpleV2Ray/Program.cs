@@ -147,20 +147,71 @@ namespace SimpleV2Ray
         {
             string v2ctlPath = Path.Combine(Environment.CurrentDirectory, "v2ray-core", "v2ctl.exe");
             List<OutboundStats> outboundStatses = new();
+
+            // resolve api server
+            if (v2RayConfig.Api == null || v2RayConfig.Api.Tag == null)
+            {
+                Console.Error.WriteLine("Failed to resolve API.");
+                return;
+            }
+            string apiTag = v2RayConfig.Api.Tag;
+
+            if (v2RayConfig.Routing == null || v2RayConfig.Routing.Rules == null)
+            {
+                Console.Error.WriteLine("Failed to resolve routing.");
+                return;
+            }
+            HashSet<string>? apiInbounds = null;
+            foreach (V2RayConfig.RoutingConfig.RuleConfig rule in v2RayConfig.Routing.Rules)
+            {
+                if (rule.OutboundTag == apiTag && rule.InboundTag != null)
+                {
+                    apiInbounds = new HashSet<string>(rule.InboundTag);
+                    break;
+                }
+            }
+            if (apiInbounds == null)
+            {
+                Console.Error.WriteLine("Failed to resolve API inbound.");
+                return;
+            }
+
+            if (v2RayConfig.Inbounds == null)
+            {
+                Console.Error.WriteLine("Failed to resolve inbounds.");
+                return;
+            }
+            string? apiServer = null;
+            foreach (V2RayConfig.InboundConfig inbound in v2RayConfig.Inbounds)
+            {
+                if (inbound.Tag != null && apiInbounds.Contains(inbound.Tag))
+                {
+                    apiServer = $"{inbound.Listen}:{inbound.Port}";
+                    break;
+                }
+            }
+            if (apiServer == null)
+            {
+                Console.Error.WriteLine("Failed to resolve API server.");
+                return;
+            }
+
             // resolve outbounds
             if (v2RayConfig.Outbounds == null)
             {
                 Console.Error.WriteLine("Failed to resolve outbounds.");
                 return;
             }
+
             foreach (V2RayConfig.OutboundConfig outbound in v2RayConfig.Outbounds)
             {
                 if (outbound.Tag != null)
                 {
-                    outboundStatses.Add(new OutboundStats(outbound.Tag));
+                    outboundStatses.Add(new OutboundStats(outbound.Tag, apiServer));
                 }
             }
 
+            // proc loop
             try
             {
                 while (true)
