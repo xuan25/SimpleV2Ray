@@ -1,6 +1,6 @@
 # SimpleV2Ray
 
-A simple client in terminal hosting V2Ray (v2ray-core) on Windows.
+A simple client in terminal hosting V2Ray ([v2ray-core](https://github.com/v2fly/v2ray-core)) on Windows.
 
 ![screenshot.png](./img/screenshot.png)
 
