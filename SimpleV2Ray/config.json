@@ -1,0 +1,146 @@
+{
+  "log": {
+    "loglevel": "warning"
+  },
+  "api": {
+    "tag": "api",
+    "services": [
+      "HandlerService",
+      "LoggerService",
+      "StatsService"
+    ]
+  },
+  "dns": {
+    "servers": [
+      {
+        "address": "10.0.0.2",
+        "domains": [
+          "domain:api.live.bilibili.com",
+          "domain:live-push.bilivideo.com"
+        ]
+      },
+      {
+        "address": "10.0.0.2",
+        "domains": [
+          "domain:www.bilibili.com",
+          "domain:api.bilibili.com"
+        ]
+      },
+      "localhost"
+    ],
+    "tag": "dns_inbound"
+  },
+  "stats": {
+  },
+  "routing": {
+    "rules": [
+      {
+        "type": "field",
+        "inboundTag": [
+          "api_inbound"
+        ],
+        "outboundTag": "api"
+      },
+      {
+        "type": "field",
+        "domain": [
+          "domain:api.live.bilibili.com",
+          "domain:live-push.bilivideo.com"
+        ],
+        "outboundTag": "wireguard"
+      },
+      {
+        "type": "field",
+        "domain": [
+          "domain:www.bilibili.com",
+          "domain:api.bilibili.com"
+        ],
+        "outboundTag": "wireguard"
+      },
+      {
+        "inboundTag": [
+          "dns_inbound"
+        ],
+        "ip": [
+          "10.0.0.2"
+        ],
+        "outboundTag": "dns_wireguard",
+        "port": "53",
+        "type": "field"
+      }
+    ]
+  },
+  "policy": {
+    "system": {
+      "statsInboundDownlink": true,
+      "statsInboundUplink": true,
+      "statsOutboundDownlink": true,
+      "statsOutboundUplink": true
+    }
+  },
+  "inbounds": [
+    {
+      "listen": "127.0.0.1",
+      "port": 15490,
+      "protocol": "dokodemo-door",
+      "settings": {
+        "address": "127.0.0.1"
+      },
+      "sniffing": {
+      },
+      "tag": "api_inbound"
+    },
+    {
+      "listen": "127.0.0.1",
+      "port": 8889,
+      "protocol": "http",
+      "settings": {
+        "allowTransparent": true,
+        "timeout": 300
+      },
+      "tag": "http_inbound",
+      "sniffing": {
+        "enabled": false,
+        "destOverride": [ "http", "tls" ]
+      }
+    },
+    {
+      "listen": "127.0.0.1",
+      "port": 1089,
+      "protocol": "socks",
+      "settings": {
+        "auth": "noauth",
+        "ip": "127.0.0.1",
+        "udp": true
+      },
+      "tag": "socks_inbound"
+    }
+  ],
+  "outbounds": [
+    {
+      "protocol": "freedom",
+      "sendThrough": "0.0.0.0",
+      "settings": {
+        "domainStrategy": "AsIs"
+      },
+      "tag": "direct"
+    },
+    {
+      "protocol": "freedom",
+      "sendThrough": "10.0.0.2",
+      "settings": {
+        "domainStrategy": "UseIP"
+      },
+      "tag": "wireguard"
+    },
+    {
+      "protocol": "freedom",
+      "sendThrough": "10.0.0.2",
+      "settings": {
+        "domainStrategy": "AsIs",
+        "redirect": "8.8.8.8:53"
+      },
+      "tag": "dns_wireguard"
+    }
+  ]
+}
