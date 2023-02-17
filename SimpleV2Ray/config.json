@@ -13,14 +13,14 @@
   "dns": {
     "servers": [
       {
-        "address": "10.0.0.2",
+        "address": "10.2.3.1",
         "domains": [
           "domain:api.live.bilibili.com",
           "domain:live-push.bilivideo.com"
         ]
       },
       {
-        "address": "10.0.0.2",
+        "address": "10.2.3.1",
         "domains": [
           "domain:www.bilibili.com",
           "domain:api.bilibili.com"
@@ -62,7 +62,7 @@
           "dns_inbound"
         ],
         "ip": [
-          "10.0.0.2"
+          "10.2.3.1"
         ],
         "outboundTag": "dns_wireguard",
         "port": "53",
@@ -127,7 +127,7 @@
     },
     {
       "protocol": "freedom",
-      "sendThrough": "10.0.0.2",
+      "sendThrough": "10.2.3.1",
       "settings": {
         "domainStrategy": "UseIP"
       },
@@ -135,7 +135,7 @@
     },
     {
       "protocol": "freedom",
-      "sendThrough": "10.0.0.2",
+      "sendThrough": "10.2.3.1",
       "settings": {
         "domainStrategy": "AsIs",
         "redirect": "8.8.8.8:53"
