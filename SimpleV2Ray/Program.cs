@@ -12,6 +12,8 @@ namespace SimpleV2Ray
         private Process? v2rayProc;
         private Thread? statsMonThread;
 
+        private readonly object consoleLock = new();
+
         bool IsV2RayRunning
         {
             get
@@ -45,14 +47,14 @@ namespace SimpleV2Ray
                 V2RayConfig? v2RayConfig = V2RayConfig.Load("config.json");
                 if (v2RayConfig == null)
                 {
-                    Console.Error.WriteLine("Failed to load V2Ray config.");
+                    AppendErrorLine("Failed to load V2Ray config.");
                     return;
                 }
 
                 // resolve proxy inbound
                 if (v2RayConfig.Inbounds == null)
                 {
-                    Console.Error.WriteLine("Failed to resolve inbounds.");
+                    AppendErrorLine("Failed to resolve inbounds.");
                     return;
                 }
                 string? proxyUrl = null;
@@ -66,18 +68,18 @@ namespace SimpleV2Ray
 
                 if (proxyUrl == null)
                 {
-                    Console.Error.WriteLine("Failed to resolve proxy inbound.");
+                    AppendErrorLine("Failed to resolve proxy inbound.");
                     return;
                 }
 
-                Console.WriteLine("Configuring system proxy...");
+                AppendLine("Configuring system proxy...");
                 if (!SystemProxy.SetProxy(proxyUrl, false))
                 {
-                    Console.Error.WriteLine("Failed to configure system proxy.");
+                    AppendErrorLine("Failed to configure system proxy.");
                     return;
                 }
 
-                Console.WriteLine("Starting V2Ray...");
+                AppendLine("Starting V2Ray...");
                 v2rayExitedEvent.Reset();
                 v2rayProc = new Process()
                 {
@@ -104,8 +106,9 @@ namespace SimpleV2Ray
 
                 v2rayExitedEvent.WaitOne();
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                AppendErrorLine($"{ex.Message}\n{ex.StackTrace}");
                 OnExit();
                 throw;
             }
@@ -118,10 +121,13 @@ namespace SimpleV2Ray
             {
                 return;
             }
-            
+
             // write log
-            Console.Write(new string(' ', Console.BufferWidth) + '\r');
-            Console.WriteLine(e.Data);
+            lock (consoleLock)
+            {
+                Console.Write(new string(' ', Console.BufferWidth) + '\r');
+                Console.WriteLine(e.Data);
+            }
 
             // append stats
             AppendStatsFloating();
@@ -131,7 +137,7 @@ namespace SimpleV2Ray
         {
             // write log
             Console.Write(new string(' ', Console.BufferWidth) + '\r');
-            Console.Error.WriteLine(e.Data);
+            AppendErrorLine(e.Data);
 
             // append stats
             AppendStatsFloating();
@@ -139,7 +145,14 @@ namespace SimpleV2Ray
 
         private void V2rayProc_Exited(object? sender, EventArgs e)
         {
-            Console.WriteLine("V2Ray Exited.");
+            if(v2rayProc != null && v2rayProc.ExitCode != 0)
+            {
+                AppendErrorLine($"V2Ray Exited with code {v2rayProc.ExitCode}.");
+            }
+            else
+            {
+                AppendLine("V2Ray Exited.");
+            }
             v2rayExitedEvent.Set();
         }
 
@@ -151,14 +164,14 @@ namespace SimpleV2Ray
             // resolve api server
             if (v2RayConfig.Api == null || v2RayConfig.Api.Tag == null)
             {
-                Console.Error.WriteLine("Failed to resolve API.");
+                AppendErrorLine("Failed to resolve API.");
                 return;
             }
             string apiTag = v2RayConfig.Api.Tag;
 
             if (v2RayConfig.Routing == null || v2RayConfig.Routing.Rules == null)
             {
-                Console.Error.WriteLine("Failed to resolve routing.");
+                AppendErrorLine("Failed to resolve routing.");
                 return;
             }
             HashSet<string>? apiInbounds = null;
@@ -172,13 +185,13 @@ namespace SimpleV2Ray
             }
             if (apiInbounds == null)
             {
-                Console.Error.WriteLine("Failed to resolve API inbound.");
+                AppendErrorLine("Failed to resolve API inbound.");
                 return;
             }
 
             if (v2RayConfig.Inbounds == null)
             {
-                Console.Error.WriteLine("Failed to resolve inbounds.");
+                AppendErrorLine("Failed to resolve inbounds.");
                 return;
             }
             string? apiServer = null;
@@ -192,14 +205,14 @@ namespace SimpleV2Ray
             }
             if (apiServer == null)
             {
-                Console.Error.WriteLine("Failed to resolve API server.");
+                AppendErrorLine("Failed to resolve API server.");
                 return;
             }
 
             // resolve outbounds
             if (v2RayConfig.Outbounds == null)
             {
-                Console.Error.WriteLine("Failed to resolve outbounds.");
+                AppendErrorLine("Failed to resolve outbounds.");
                 return;
             }
 
@@ -227,7 +240,10 @@ namespace SimpleV2Ray
                         statsBuilder.AppendLine($" {"DownLink",10}: {BinarySizeFormatter.SizeSuffix(outboundStats.Downlink),20} {BinarySizeFormatter.SizeSuffix(outboundStats.DownlinkRate),20}/s");
                     }
 
-                    statsBuilder.Swap();
+                    lock (statsBuilder)
+                    {
+                        statsBuilder.Swap();
+                    }
 
                     AppendStatsFloating();
 
@@ -243,42 +259,67 @@ namespace SimpleV2Ray
 
         private void AppendStatsFloating()
         {
-            for (int i = 0; i < statsBuilder.NumLines; i++)
+            lock(statsBuilder)
             {
-                Console.WriteLine(new string(' ', Console.BufferWidth) + '\r');
-            }
+                lock (consoleLock)
+                {
+                    for (int i = 0; i < statsBuilder.NumLines; i++)
+                    {
+                        Console.WriteLine(new string(' ', Console.BufferWidth) + '\r');
+                    }
 
-            Console.SetCursorPosition(0, Console.CursorTop - statsBuilder.NumLines);
-            Console.Write(statsBuilder.Text);
-            Console.SetCursorPosition(0, Console.CursorTop - statsBuilder.NumLines);
+                    Console.SetCursorPosition(0, Console.CursorTop - statsBuilder.NumLines);
+                    Console.Write(statsBuilder.Text);
+                    Console.SetCursorPosition(0, Console.CursorTop - statsBuilder.NumLines);
+                } 
+            }
+        }
+
+        private void AppendLine(string text)
+        {
+            lock (consoleLock)
+            {
+                Console.WriteLine(text);
+            }
+        }
+
+        private void AppendErrorLine(string text)
+        {
+            lock (consoleLock)
+            {
+                Console.ForegroundColor = ConsoleColor.DarkRed;
+                Console.Error.WriteLine(text);
+                Console.ResetColor();
+            }
+                
         }
 
         private bool HandleConsoleCtrl(int eventType)
         {
-            Console.WriteLine("Console window closing, death imminent");
+            AppendLine("Console window closing, death imminent");
             OnExit();
             return false;
         }
 
         private void OnExit()
         {
-            Console.WriteLine("Removing system proxy...");
+            AppendLine("Removing system proxy...");
             if (!SystemProxy.SetProxy(null, false))
             {
-                Console.Error.WriteLine("Failed to remove system proxy.");
+                AppendErrorLine("Failed to remove system proxy.");
                 return;
             }
 
             if (IsV2RayRunning)
             {
-                Console.WriteLine("Stopping V2Ray...");
+                AppendLine("Stopping V2Ray...");
                 v2rayProc!.Kill();
                 v2rayExitedEvent.Set();
             }
 
             if (IsStatsMonThreadRunning)
             {
-                Console.WriteLine("Stopping StatsMon...");
+                AppendLine("Stopping StatsMon...");
                 statsMonThreadCTS.Cancel();
                 statsMonThread!.Join();
             }
