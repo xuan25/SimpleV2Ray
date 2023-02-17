@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -18,5 +18,15 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
+  
+  <Target Name="Archive" AfterTargets="Publish" Condition="$(PublishSingleFile)">
+	 <ItemGroup>
+	  <Archive Include="$(PublishDir)SimpleV2Ray.exe" />
+	  <Archive Include="$(PublishDir)config.json" />
+	 </ItemGroup>
+  	<Copy SourceFiles="@(Archive)" DestinationFolder="$(PublishDir)pack\SimpleV2Ray" />
+  	<MakeDir Directories="$(PublishDir)pack\SimpleV2Ray\v2ray-core" />
+  	<ZipDirectory DestinationFile="$(PublishDir)$(AssemblyName)_$(RuntimeIdentifier).zip" Overwrite="true" SourceDirectory="$(PublishDir)pack\SimpleV2Ray" />
+  </Target>
 
 </Project>
