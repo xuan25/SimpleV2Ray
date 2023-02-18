@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 
 namespace SimpleV2Ray
 {
@@ -218,6 +218,11 @@ namespace SimpleV2Ray
 
             foreach (V2RayConfig.OutboundConfig outbound in v2RayConfig.Outbounds)
             {
+                if (outbound.SendThrough == "127.0.0.1")
+                {
+                    // skip loopback
+                    continue;
+                }
                 if (outbound.Tag != null)
                 {
                     outboundStatses.Add(new OutboundStats(outbound.Tag, apiServer));

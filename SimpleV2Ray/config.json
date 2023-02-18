@@ -42,6 +42,13 @@
         "outboundTag": "api"
       },
       {
+        "ip": [
+          "127.0.0.1"
+        ],
+        "outboundTag": "loopback",
+        "type": "field"
+      },
+      {
         "type": "field",
         "domain": [
           "domain:api.live.bilibili.com",
@@ -124,6 +131,14 @@
         "domainStrategy": "AsIs"
       },
       "tag": "direct"
+    },
+    {
+      "protocol": "freedom",
+      "sendThrough": "127.0.0.1",
+      "settings": {
+        "domainStrategy": "AsIs"
+      },
+      "tag": "loopback"
     },
     {
       "protocol": "freedom",
