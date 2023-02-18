@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 
 namespace SimpleV2Ray
 {
@@ -13,6 +13,8 @@ namespace SimpleV2Ray
         private Thread? statsMonThread;
 
         private readonly object consoleLock = new();
+
+        private string? apiTag = null;
 
         bool IsV2RayRunning
         {
@@ -65,12 +67,19 @@ namespace SimpleV2Ray
                         proxyUrl = $"{inbound.Protocol}://{inbound.Listen}:{inbound.Port}";
                     }
                 }
-
                 if (proxyUrl == null)
                 {
                     AppendErrorLine("Failed to resolve proxy inbound.");
                     return;
                 }
+
+                // resolve api tag
+                if (v2RayConfig.Api == null || v2RayConfig.Api.Tag == null)
+                {
+                    AppendErrorLine("Failed to resolve API Tag.");
+                    return;
+                }
+                apiTag = v2RayConfig.Api.Tag;
 
                 AppendLine("Configuring system proxy...");
                 if (!SystemProxy.SetProxy(proxyUrl, false))
@@ -117,7 +126,7 @@ namespace SimpleV2Ray
 
         private void V2rayProc_OutputDataReceived(object sender, DataReceivedEventArgs e)
         {
-            if(e.Data != null && e.Data.EndsWith("[api] "))
+            if(e.Data != null && e.Data.EndsWith($"[{apiTag}]"))
             {
                 return;
             }
