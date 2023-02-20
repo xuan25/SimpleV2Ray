@@ -21,12 +21,12 @@
   
   <Target Name="Archive" AfterTargets="Publish" Condition="$(PublishSingleFile)">
 	 <ItemGroup>
-	  <Archive Include="$(PublishDir)SimpleV2Ray.exe" />
-	  <Archive Include="$(PublishDir)config.json" />
+	  <Archive Include="$(PublishDir)*.*" />
 	 </ItemGroup>
-  	<Copy SourceFiles="@(Archive)" DestinationFolder="$(PublishDir)pack\SimpleV2Ray" />
-  	<MakeDir Directories="$(PublishDir)pack\SimpleV2Ray\v2ray-core" />
-  	<ZipDirectory DestinationFile="$(PublishDir)$(AssemblyName)_$(RuntimeIdentifier).zip" Overwrite="true" SourceDirectory="$(PublishDir)pack\SimpleV2Ray" />
+  	<Copy SourceFiles="@(Archive)" DestinationFolder="$(PublishDir)pack\$(AssemblyName)" />
+  	<MakeDir Directories="$(PublishDir)pack\$(AssemblyName)\v2ray-core" />
+	<MakeDir Directories="..\publish"/>
+  	<ZipDirectory DestinationFile="..\publish\$(AssemblyName)_$(RuntimeIdentifier).zip" Overwrite="true" SourceDirectory="$(PublishDir)pack\$(AssemblyName)" />
   </Target>
 
 </Project>
