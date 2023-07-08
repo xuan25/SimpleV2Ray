@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -143,7 +143,7 @@ namespace SimpleV2Ray
             }
 
             // write log
-            logger.AppendLine(new string(' ', Console.BufferWidth) + '\r' + e.Data);
+            logger.AppendLine(e.Data);
 
             // append stats
             AppendStatsFloating();
@@ -152,7 +152,7 @@ namespace SimpleV2Ray
         private void V2rayProc_ErrorDataReceived(object sender, DataReceivedEventArgs e)
         {
             // write log
-            logger.AppendErrorLine(new string(' ', Console.BufferWidth) + '\r' + e.Data);
+            logger.AppendErrorLine(e.Data);
 
             // append stats
             AppendStatsFloating();

@@ -14,7 +14,7 @@ namespace SimpleV2Ray
         {
             lock (consoleLock)
             {
-                Console.WriteLine(text);
+                Console.WriteLine(new string(' ', Console.BufferWidth) + '\r' + text);
             }
         }
 
@@ -23,7 +23,7 @@ namespace SimpleV2Ray
             lock (consoleLock)
             {
                 Console.ForegroundColor = ConsoleColor.DarkRed;
-                Console.Error.WriteLine(text);
+                Console.Error.WriteLine(new string(' ', Console.BufferWidth) + '\r' + text);
                 Console.ResetColor();
             }
 
