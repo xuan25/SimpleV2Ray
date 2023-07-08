@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -121,17 +121,16 @@ namespace SimpleV2Ray
                 OnExit();
                 throw;
             }
-            OnExit();
         }
 
-        public void Stop()
+        public void Close()
         {
-
+            OnExit();
         }
 
         public void WaitForExit()
         {
-
+            v2rayExitedEvent.WaitOne();
         }
 
         private void V2rayProc_OutputDataReceived(object sender, DataReceivedEventArgs e)
@@ -167,7 +166,7 @@ namespace SimpleV2Ray
             {
                 logger.AppendLine("V2Ray Exited.");
             }
-            v2rayExitedEvent.Set();
+            OnExit();
         }
 
         private void StatsMonProc(V2RayConfig v2RayConfig, CancellationToken cancellationToken)
@@ -320,11 +319,6 @@ namespace SimpleV2Ray
                 v2rayProc!.Kill();
                 v2rayProc.Exited -= V2rayProc_Exited;
             }
-        }
-
-        public void Close()
-        {
-            OnExit();
         }
     }
 }

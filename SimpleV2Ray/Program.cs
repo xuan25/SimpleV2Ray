@@ -7,7 +7,14 @@ namespace SimpleV2Ray
         private readonly ConsoleNative.ConsoleCtrlHandler consoleCtrlHandler;      // Keeps it from getting garbage collected
         private readonly Logger logger;
 
+        private FileSystemWatcher configWatcher;
+
         private V2RayProxyClient v2RayProxyClient;
+
+        private bool exiting = false;
+
+        private readonly ManualResetEvent reloadExitEvent = new(false);
+        private readonly ManualResetEvent finalizedEvent = new(false);
 
         public Program()
         {
@@ -22,15 +29,35 @@ namespace SimpleV2Ray
             Console.CursorVisible = false;
             Environment.CurrentDirectory = AppDomain.CurrentDomain.SetupInformation.ApplicationBase!;
 
-            v2RayProxyClient = new V2RayProxyClient(logger);
-            v2RayProxyClient.Start();
-            v2RayProxyClient.WaitForExit();
+            configWatcher = new FileSystemWatcher("./", "config.json");
+            configWatcher.Changed += ConfigWatcher_Changed; ;
+            configWatcher.EnableRaisingEvents = true;
+
+            while (!exiting)
+            {
+                v2RayProxyClient = new V2RayProxyClient(logger);
+                v2RayProxyClient.Start();
+
+                reloadExitEvent.Reset();
+                reloadExitEvent.WaitOne();
+
+                v2RayProxyClient.Close();
+            }
+            finalizedEvent.Set();
+        }
+
+        private void ConfigWatcher_Changed(object sender, FileSystemEventArgs e)
+        {
+            logger.AppendLine("Config changed. Restarting...");
+            reloadExitEvent.Set();
         }
 
         private bool HandleConsoleCtrl(int eventType)
         {
+            exiting = true;
             logger.AppendLine("Console window closing, death imminent");
-            v2RayProxyClient.Close();
+            reloadExitEvent.Set();
+            finalizedEvent.WaitOne();
             return false;
         }
 
