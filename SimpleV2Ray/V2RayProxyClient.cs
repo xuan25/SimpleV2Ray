@@ -141,7 +141,7 @@ namespace SimpleV2Ray
             }
 
             // write log
-            logger.AppendLine(e.Data);
+            logger.AppendLine(e.Data ?? string.Empty);
 
             // append stats
             AppendStatsFloating();
@@ -150,7 +150,7 @@ namespace SimpleV2Ray
         private void V2rayProc_ErrorDataReceived(object sender, DataReceivedEventArgs e)
         {
             // write log
-            logger.AppendErrorLine(e.Data);
+            logger.AppendErrorLine(e.Data ?? string.Empty);
 
             // append stats
             AppendStatsFloating();

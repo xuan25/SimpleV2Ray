@@ -7,9 +7,8 @@ namespace SimpleV2Ray
         private readonly ConsoleNative.ConsoleCtrlHandler consoleCtrlHandler;      // Keeps it from getting garbage collected
         private readonly Logger logger;
 
-        private FileSystemWatcher configWatcher;
-
-        private V2RayProxyClient v2RayProxyClient;
+        private FileSystemWatcher? configWatcher;
+        private V2RayProxyClient? v2RayProxyClient;
 
         private bool exiting = false;
 
@@ -29,13 +28,13 @@ namespace SimpleV2Ray
             Console.CursorVisible = false;
             Environment.CurrentDirectory = AppDomain.CurrentDomain.SetupInformation.ApplicationBase!;
 
-            configWatcher = new FileSystemWatcher("./", "config.json");
+            configWatcher = new("./", "config.json");
             configWatcher.Changed += ConfigWatcher_Changed; ;
             configWatcher.EnableRaisingEvents = true;
 
             while (!exiting)
             {
-                v2RayProxyClient = new V2RayProxyClient(logger);
+                v2RayProxyClient = new(logger);
                 v2RayProxyClient.Start();
 
                 reloadExitEvent.Reset();
