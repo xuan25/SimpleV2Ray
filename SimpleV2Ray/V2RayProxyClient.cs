@@ -82,13 +82,6 @@ namespace SimpleV2Ray
                 }
                 apiTag = v2RayConfig.Api.Tag;
 
-                logger.AppendLine("Configuring system proxy...");
-                if (!SystemProxy.SetProxy(proxyUrl, false))
-                {
-                    logger.AppendErrorLine("Failed to configure system proxy.");
-                    return;
-                }
-
                 logger.AppendLine("Starting V2Ray...");
                 v2rayExitedEvent.Reset();
                 v2rayProc = new Process()
@@ -111,10 +104,16 @@ namespace SimpleV2Ray
                 v2rayProc.BeginOutputReadLine();
                 v2rayProc.BeginErrorReadLine();
 
+                logger.AppendLine("Starting StatsMon...");
                 statsMonThread = new Thread(new ThreadStart(() => StatsMonProc(v2RayConfig, statsMonThreadCTS.Token)));
                 statsMonThread.Start();
 
-                v2rayExitedEvent.WaitOne();
+                logger.AppendLine("Configuring system proxy...");
+                if (!SystemProxy.SetProxy(proxyUrl, false))
+                {
+                    logger.AppendErrorLine("Failed to configure system proxy.");
+                    return;
+                }
             }
             catch (Exception ex)
             {
@@ -304,18 +303,22 @@ namespace SimpleV2Ray
                 return;
             }
 
-            if (IsV2RayRunning)
-            {
-                logger.AppendLine("Stopping V2Ray...");
-                v2rayProc!.Kill();
-                v2rayExitedEvent.Set();
-            }
-
             if (IsStatsMonThreadRunning)
             {
                 logger.AppendLine("Stopping StatsMon...");
                 statsMonThreadCTS.Cancel();
                 statsMonThread!.Join();
+            }
+
+            if (IsV2RayRunning)
+            {
+                logger.AppendLine("Stopping V2Ray...");
+                v2rayProc!.CancelOutputRead();
+                v2rayProc!.CancelErrorRead();
+                v2rayProc.OutputDataReceived -= V2rayProc_OutputDataReceived;
+                v2rayProc.ErrorDataReceived -= V2rayProc_ErrorDataReceived;
+                v2rayProc!.Kill();
+                v2rayProc.Exited -= V2rayProc_Exited;
             }
         }
 
